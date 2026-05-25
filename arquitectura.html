@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AccesoEval — Arquitectura Técnica</title>
+<style>
+  :root {
+    --primary:#1E3A5F; --primary-light:#2E6DA4; --accent:#2E86AB;
+    --cl:#3B82F6; --vp:#F59E0B; --ae:#EC4899;
+    --surface:#F7F9FC; --card:#fff; --border:#D4DDE8;
+    --text:#1A2638; --muted:#6B7D93;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);color:var(--text);background:var(--surface);line-height:1.7}
+  a{color:var(--primary-light)}
+  /* Layout */
+  .page{max-width:960px;margin:0 auto;padding:2rem 1rem 4rem}
+  /* Header */
+  .doc-header{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:3rem 2rem;text-align:center}
+  .doc-header h1{font-size:clamp(1.8rem,5vw,2.5rem);font-weight:800;margin-bottom:.5rem}
+  .doc-header p{opacity:.85;font-size:clamp(.9rem,2vw,1.05rem)}
+  .doc-meta{display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;margin-top:1.2rem}
+  .meta-tag{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:50px;padding:.3rem .9rem;font-size:.8rem}
+  /* Nav índice */
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:2rem 0}
+  .toc h3{font-size:.85rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1rem}
+  .toc ol{padding-left:1.2rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.3rem .5rem}
+  .toc li{font-size:.875rem}
+  /* Secciones */
+  .section{margin-bottom:3rem}
+  .section-title{font-size:1.3rem;font-weight:800;color:var(--primary);border-left:4px solid var(--primary);padding-left:.75rem;margin-bottom:1.2rem;margin-top:2.5rem}
+  .section-sub{font-size:1rem;font-weight:700;color:var(--text);margin:1.2rem 0 .6rem}
+  p{margin-bottom:.75rem;font-size:.95rem}
+  /* Cajas */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1rem}
+  .card h4{font-size:.9rem;font-weight:700;margin-bottom:.5rem}
+  .card p{font-size:.875rem;color:var(--muted);margin:0}
+  /* Decisión técnica */
+  .decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+  @media(max-width:600px){.decision-grid{grid-template-columns:1fr}}
+  .decision-card{border-radius:10px;padding:1.2rem;border:2px solid}
+  .decision-card.winner{border-color:#16A34A;background:#F0FDF4}
+  .decision-card.alt{border-color:var(--border);background:var(--surface)}
+  .decision-card h4{font-size:.9rem;font-weight:800;margin-bottom:.5rem}
+  .decision-card .verdict{display:inline-block;font-size:.75rem;font-weight:700;padding:.2rem .7rem;border-radius:50px;margin-bottom:.75rem}
+  .verdict.rec{background:#16A34A;color:#fff}
+  .verdict.no{background:#94A3B8;color:#fff}
+  .pro-con{font-size:.82rem;display:flex;flex-direction:column;gap:.25rem}
+  .pro-con span{display:flex;gap:.4rem}
+  /* Tabla */
+  .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);margin:1rem 0}
+  table{width:100%;border-collapse:collapse;font-size:.85rem;min-width:500px}
+  th{background:var(--primary);color:#fff;padding:.65rem .85rem;text-align:left;font-weight:600}
+  td{padding:.6rem .85rem;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:#FAFBFC}
+  /* Colores de categoría */
+  .cat-cl{background:rgba(59,130,246,.1);color:#1D4ED8;border-radius:4px;padding:1px 5px;font-weight:600}
+  .cat-vp{background:rgba(245,158,11,.1);color:#B45309;border-radius:4px;padding:1px 5px;font-weight:600}
+  .cat-ae{background:rgba(236,72,153,.1);color:#BE185D;border-radius:4px;padding:1px 5px;font-weight:600}
+  /* Diagrama de flujo */
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:1rem 0}
+  .flow-box{background:var(--primary);color:#fff;border-radius:8px;padding:.6rem 1rem;font-size:.82rem;font-weight:700;text-align:center}
+  .flow-box.screen{background:var(--primary-light)}
+  .flow-box.db{background:#7C3AED}
+  .flow-box.ai{background:#0891B2}
+  .flow-arrow{font-size:1.2rem;color:var(--muted)}
+  /* Stack técnico */
+  .stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin:1rem 0}
+  .stack-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem;font-size:.85rem}
+  .stack-item .layer{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:.3rem}
+  .stack-item .tech{font-weight:700;color:var(--primary)}
+  .stack-item .why{color:var(--muted);font-size:.78rem;margin-top:.2rem}
+  /* Criterios */
+  .criteria-card{border-left:3px solid;border-radius:0 8px 8px 0;padding:.85rem 1rem;margin-bottom:.6rem;background:var(--card);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .criteria-card.cl{border-left-color:var(--cl)}
+  .criteria-card.vp{border-left-color:var(--vp)}
+  .criteria-card.ae{border-left-color:var(--ae)}
+  .criteria-card h5{font-size:.85rem;font-weight:700;margin-bottom:.25rem}
+  .criteria-card p{font-size:.8rem;color:var(--muted);margin:0}
+  /* DB */
+  .db-entity{background:var(--card);border:2px solid var(--primary);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+  .db-entity .entity-head{background:var(--primary);color:#fff;padding:.5rem 1rem;font-size:.85rem;font-weight:700}
+  .db-entity .entity-fields{padding:.5rem 1rem}
+  .db-field{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.82rem}
+  .db-field:last-child{border-bottom:none}
+  .field-pk{background:#EEF2FF;color:#4338CA;font-size:.65rem;font-weight:700;padding:1px 5px;border-radius:3px}
+  .field-fk{background:#FFF7ED;color:#C2410C;font-size:.65rem;font-weight:700;padding:1px 5px;border-radius:3px}
+  /* Hoja de ruta */
+  .roadmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;margin:1rem 0}
+  .phase{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.1rem;border-top:4px solid}
+  .phase.p1{border-top-color:var(--primary)}
+  .phase.p2{border-top-color:var(--vp)}
+  .phase.p3{border-top-color:var(--ae)}
+  .phase h4{font-size:.9rem;font-weight:800;margin-bottom:.4rem}
+  .phase .timeline{font-size:.75rem;color:var(--muted);margin-bottom:.6rem}
+  .phase ul{list-style:none;display:flex;flex-direction:column;gap:.3rem}
+  .phase ul li{font-size:.8rem;display:flex;align-items:flex-start;gap:.4rem}
+  .phase ul li::before{content:'·';font-weight:700;color:var(--muted);flex-shrink:0}
+  /* Alerta */
+  .alert{background:#FFFBEB;border:1px solid #FDE68A;border-left:4px solid var(--vp);border-radius:8px;padding:.85rem 1rem;font-size:.85rem;color:#92400E;margin:1rem 0}
+  /* Code */
+  .code-block{background:#1E2733;color:#E2E8F0;border-radius:8px;padding:1rem 1.2rem;font-family:'Consolas',monospace;font-size:.82rem;overflow-x:auto;margin:.75rem 0;line-height:1.6}
+  .code-comment{color:#64748B}
+  .code-key{color:#7DD3FC}
+  .code-str{color:#86EFAC}
+  /* Responsive */
+  @media(max-width:600px){
+    .doc-header{padding:2rem 1rem}
+    .toc ol{grid-template-columns:1fr}
+    .flow{flex-direction:column;align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+
+<div class="doc-header">
+  <h1>AccesoEval — Arquitectura Técnica</h1>
+  <p>Documento de diseño del sistema · Versión 1.0 MVP</p>
+  <div class="doc-meta">
+    <span class="meta-tag">📅 Mayo 2026</span>
+    <span class="meta-tag">🏫 Escuela Patrimonial California</span>
+    <span class="meta-tag">🔬 Piloto: Pruebas Escritas</span>
+    <span class="meta-tag">🌐 ES / FR</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="toc">
+    <h3>Índice</h3>
+    <ol>
+      <li><a href="#s1">Resumen ejecutivo</a></li>
+      <li><a href="#s2">Decisión: Word vs Google Docs</a></li>
+      <li><a href="#s3">Arquitectura general</a></li>
+      <li><a href="#s4">Stack tecnológico recomendado</a></li>
+      <li><a href="#s5">Flujo UX/UI completo</a></li>
+      <li><a href="#s6">Motor de análisis automático</a></li>
+      <li><a href="#s7">Integración IA + editor interactivo</a></li>
+      <li><a href="#s8">Estructura de base de datos</a></li>
+      <li><a href="#s9">Sistema de comentarios inteligentes</a></li>
+      <li><a href="#s10">Hoja de ruta y escalabilidad</a></li>
+    </ol>
+  </div>
+
+  <!-- ══ 1. RESUMEN ══ -->
+  <div id="s1" class="section">
+    <div class="section-title">1. Resumen Ejecutivo</div>
+    <p>
+      <strong>AccesoEval</strong> es una herramienta web educativa que analiza pruebas escritas
+      y sugiere adecuaciones de acceso para estudiantes con Necesidades Educativas Especiales (NEE),
+      basándose en el <strong>Diseño Universal para el Aprendizaje (DUA)</strong>.
+    </p>
+    <p>
+      El sistema detecta oportunidades de mejora en tres dimensiones:
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:.75rem;margin:.75rem 0 1rem">
+      <span class="cat-cl">● Comprensión Lectora</span>
+      <span class="cat-vp">● Velocidad de Procesamiento</span>
+      <span class="cat-ae">● Ansiedad Evaluativa</span>
+    </div>
+    <p>
+      <strong>Principio fundamental:</strong> AccesoEval <em>no modifica</em> objetivos de aprendizaje,
+      contenidos curriculares ni nivel cognitivo. Opera exclusivamente sobre accesibilidad,
+      claridad lingüística, formato visual y estructura de instrucciones.
+    </p>
+    <div class="alert">
+      ⚠️ <strong>Piloto MVP:</strong> La versión inicial trabaja exclusivamente con pruebas escritas
+      (.docx). La arquitectura queda preparada para expandirse a otros tipos de instrumentos.
+    </div>
+  </div>
+
+  <!-- ══ 2. WORD VS GOOGLE DOCS ══ -->
+  <div id="s2" class="section">
+    <div class="section-title">2. Recomendación: Word (.docx) vs Google Docs</div>
+
+    <div class="decision-grid">
+      <div class="decision-card winner">
+        <span class="verdict rec">✓ RECOMENDADO PARA MVP</span>
+        <h4>📄 Opción B — Word (.docx)</h4>
+        <div class="pro-con">
+          <span>✅ Formato universal entre docentes chilenos</span>
+          <span>✅ Sin dependencia de cuenta Google</span>
+          <span>✅ Funciona offline y en redes lentas</span>
+          <span>✅ Carga directa desde pendrive o escritorio</span>
+          <span>✅ Librería <code>mammoth.js</code> (extracción) o <code>docx.js</code> (regeneración) sin costos</span>
+          <span>✅ Mantiene formato original del docente</span>
+          <span>✅ Exporta documento adecuado con 1 clic</span>
+          <span>⚠️ Limitación: no edita en tiempo real sobre el archivo</span>
+        </div>
+      </div>
+      <div class="decision-card alt">
+        <span class="verdict no">FASE 2</span>
+        <h4>🔗 Opción A — Google Docs</h4>
+        <div class="pro-con">
+          <span>✅ Edición en tiempo real nativa</span>
+          <span>✅ Comentarios y control de cambios integrado</span>
+          <span>❌ Requiere cuenta Google institucional de cada docente</span>
+          <span>❌ Necesita configuración OAuth 2.0 (semanas de dev)</span>
+          <span>❌ Dependencia de conectividad estable</span>
+          <span>❌ No todos los colegios tienen G Suite</span>
+          <span>❌ Costo: Google Workspace Education Plus (~$3 USD/usuario/mes)</span>
+          <span>❌ Datos en servidores de Google (privacidad)</span>
+        </div>
+      </div>
+    </div>
+
+    <p>
+      <strong>Veredicto técnico:</strong> Para el MVP, Word (.docx) es más eficiente, accesible y de menor
+      riesgo técnico. La plataforma exporta el documento adecuado como nuevo .docx, preservando
+      la compatibilidad total. La integración Google Docs puede agregarse en Fase 2 como opción adicional.
+    </p>
+  </div>
+
+  <!-- ══ 3. ARQUITECTURA ══ -->
+  <div id="s3" class="section">
+    <div class="section-title">3. Arquitectura General del Sistema</div>
+
+    <div class="section-sub">3.1 Diagrama de capas</div>
+
+    <div class="code-block"><span class="code-comment">// AccesoEval — Arquitectura en 3 capas</span>
+
+<span class="code-key">┌─────────────────────────────────────────────────────────┐
+│                   CAPA DE PRESENTACIÓN                  │
+│  React/Next.js · CSS responsivo · i18n (ES/FR)          │
+│  5 pantallas + modal ayuda + editor interactivo         │
+└───────────────────┬─────────────────────────────────────┘
+                    │ HTTP/HTTPS
+┌───────────────────▼─────────────────────────────────────┐
+│                    CAPA DE NEGOCIO                      │
+│  Node.js + Express · API REST                           │
+│  ├── Motor de análisis (matrices criterios JSON)        │
+│  ├── Extracción de texto (.docx → texto estructurado)   │
+│  ├── IA: Claude API (Anthropic) para NLP avanzado       │
+│  ├── Generación .docx adecuado (docx.js)                │
+│  └── Auth JWT + validación correo institucional         │
+└───────────────────┬─────────────────────────────────────┘
+                    │ SQL / ORM
+┌───────────────────▼─────────────────────────────────────┐
+│                   CAPA DE DATOS                         │
+│  PostgreSQL (producción) · SQLite (desarrollo)          │
+│  ├── Tablas: docentes, cursos, estudiantes, NEE         │
+│  ├── Análisis guardados por documento                   │
+│  ├── Matrices de criterios (JSON cargable)              │
+│  └── Historial de adecuaciones aplicadas                │
+└─────────────────────────────────────────────────────────┘</span>
+    </div>
+
+    <div class="section-sub">3.2 Componentes clave</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem">
+      <div class="card"><h4>📥 Ingesta de documento</h4><p>mammoth.js extrae texto estructurado del .docx manteniendo párrafos, encabezados y negrita. El texto se envía al motor de análisis.</p></div>
+      <div class="card"><h4>🔍 Motor de análisis</h4><p>Compara el texto contra matrices de criterios JSON (cargables). Produce un listado de segmentos problemáticos con posición, categoría y sugerencia.</p></div>
+      <div class="card"><h4>✏️ Editor interactivo</h4><p>Renderiza el texto con highlights de colores. Cada highlight enlaza con una tarjeta de sugerencia. Aceptar/rechazar actualiza el estado en tiempo real.</p></div>
+      <div class="card"><h4>📤 Exportador</h4><p>docx.js regenera el archivo .docx aplicando los cambios aceptados. El docente descarga la versión adecuada lista para imprimir o compartir.</p></div>
+      <div class="card"><h4>🤖 IA (Fase 2)</h4><p>Claude API (Anthropic) analiza matices lingüísticos que las matrices no detectan. Genera sugerencias contextualizadas y justificaciones enriquecidas.</p></div>
+      <div class="card"><h4>🔐 Autenticación</h4><p>Login por correo institucional + JWT. La BD institucional carga automáticamente docente, asignatura, cursos y nivel al autenticarse.</p></div>
+    </div>
+  </div>
+
+  <!-- ══ 4. STACK TECNOLÓGICO ══ -->
+  <div id="s4" class="section">
+    <div class="section-title">4. Stack Tecnológico Recomendado</div>
+    <div class="stack-grid">
+      <div class="stack-item"><div class="layer">Frontend</div><div class="tech">React + Next.js 14</div><div class="why">SSR, routing, i18n integrado, gran ecosistema</div></div>
+      <div class="stack-item"><div class="layer">Estilos</div><div class="tech">Tailwind CSS</div><div class="why">Responsivo rápido, consistente, sin CSS personalizado masivo</div></div>
+      <div class="stack-item"><div class="layer">Backend API</div><div class="tech">Node.js + Express</div><div class="why">Mismo lenguaje que frontend, rápido de prototipar</div></div>
+      <div class="stack-item"><div class="layer">Base de datos</div><div class="tech">PostgreSQL</div><div class="why">Relacional, robusto, gratis en producción (Railway/Supabase)</div></div>
+      <div class="stack-item"><div class="layer">ORM</div><div class="tech">Prisma</div><div class="why">Tipado, migraciones automáticas, consultas seguras</div></div>
+      <div class="stack-item"><div class="layer">Auth</div><div class="tech">NextAuth.js + JWT</div><div class="why">Email institucional, sesión segura, configurable</div></div>
+      <div class="stack-item"><div class="layer">Lectura .docx</div><div class="tech">mammoth.js</div><div class="why">Extrae texto limpio de .docx, open source, sin dependencias</div></div>
+      <div class="stack-item"><div class="layer">Escritura .docx</div><div class="tech">docx.js</div><div class="why">Genera .docx desde JS con formato completo, sin servidor</div></div>
+      <div class="stack-item"><div class="layer">IA (Fase 2)</div><div class="tech">Claude API (Anthropic)</div><div class="why">Mejor razonamiento pedagógico, multilingüe nativo</div></div>
+      <div class="stack-item"><div class="layer">Deploy</div><div class="tech">Vercel + Railway</div><div class="why">Frontend en Vercel (gratuito), BD en Railway ($5/mes)</div></div>
+      <div class="stack-item"><div class="layer">i18n</div><div class="tech">next-i18next</div><div class="why">ES/FR, archivos JSON por idioma, autodetección</div></div>
+      <div class="stack-item"><div class="layer">Criterios</div><div class="tech">JSON externo cargable</div><div class="why">Matrices editables sin redeployar; el docente puede cargar su propia matriz</div></div>
+    </div>
+    <div class="alert">
+      💡 <strong>MVP mínimo viable (sin backend):</strong> El prototipo actual (HTML+CSS+JS puro) funciona sin servidor.
+      Para escalar con múltiples usuarios y BD institucional, implementar Node.js + PostgreSQL en Fase 2.
+    </div>
+  </div>
+
+  <!-- ══ 5. FLUJO UX/UI ══ -->
+  <div id="s5" class="section">
+    <div class="section-title">5. Flujo UX/UI Completo</div>
+    <div class="flow">
+      <div class="flow-box screen">P1 · Inicio<br><small>Idioma</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box screen">P2 · Login<br><small>Correo inst.</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box db">BD Institucional<br><small>Carga perfil</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box screen">P3 · Dashboard<br><small>Carga .docx</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box ai">Motor Análisis<br><small>Matrices JSON</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box screen">P4 · Análisis<br><small>Progreso</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box screen">P5 · Editor<br><small>Highlights</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Exportar .docx<br><small>Adecuado</small></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Pantalla</th><th>Función principal</th><th>Entrada del usuario</th><th>Salida del sistema</th></tr></thead>
+        <tbody>
+          <tr><td><strong>P1 Inicio</strong></td><td>Selección de idioma y presentación</td><td>Click ES o FR</td><td>Interfaz completa en el idioma elegido</td></tr>
+          <tr><td><strong>P2 Login</strong></td><td>Autenticación institucional</td><td>Correo + contraseña</td><td>Perfil docente cargado automáticamente</td></tr>
+          <tr><td><strong>P3 Dashboard</strong></td><td>Carga del documento a analizar</td><td>Archivo .docx (drag&amp;drop o selector)</td><td>Vista previa del archivo, botón analizar</td></tr>
+          <tr><td><strong>P4 Análisis</strong></td><td>Procesamiento automático</td><td>Ninguna (automático)</td><td>Lista de observaciones con posición en texto</td></tr>
+          <tr><td><strong>P5 Editor</strong></td><td>Revisión interactiva de sugerencias</td><td>Aceptar / Rechazar / Editar manual</td><td>Documento adecuado con control de cambios</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 6. MOTOR DE ANÁLISIS ══ -->
+  <div id="s6" class="section">
+    <div class="section-title">6. Modelo de Análisis Automático</div>
+    <p>
+      El motor de análisis funciona en <strong>dos modos</strong> complementarios,
+      diseñados para escalar desde el MVP hasta producción completa:
+    </p>
+
+    <div class="section-sub">Modo 1 — Basado en matrices (MVP)</div>
+    <p>Compara el texto contra criterios predefinidos en archivos JSON. Sin costo de IA. Funciona offline.</p>
+    <div class="code-block"><span class="code-comment">// Estructura de matriz de criterios (criteria.json)</span>
+{
+  <span class="code-key">"version"</span>: <span class="code-str">"1.0"</span>,
+  <span class="code-key">"idioma"</span>: <span class="code-str">"es"</span>,
+  <span class="code-key">"criterios"</span>: [
+    {
+      <span class="code-key">"id"</span>: <span class="code-str">"CL-001"</span>,
+      <span class="code-key">"categoria"</span>: <span class="code-str">"comprension_lectora"</span>,
+      <span class="code-key">"subcategoria"</span>: <span class="code-str">"Vocabulario técnico"</span>,
+      <span class="code-key">"patron"</span>: <span class="code-str">"orden jerárquico|precedencia|operatoria"</span>,
+      <span class="code-key">"tipo_patron"</span>: <span class="code-str">"regex"</span>,
+      <span class="code-key">"sensibilidad"</span>: <span class="code-str">"intermedio"</span>,
+      <span class="code-key">"nivel_educativo"</span>: [<span class="code-str">"basico"</span>],
+      <span class="code-key">"sugerencia"</span>: <span class="code-str">"Simplificar vocabulario o definir entre paréntesis"</span>,
+      <span class="code-key">"justificacion"</span>: <span class="code-str">"DUA Pauta 2.1 — CAST 2018"</span>,
+      <span class="code-key">"evidencia"</span>: <span class="code-str">"Muy alta"</span>
+    }
+  ]
+}
+    </div>
+
+    <div class="section-sub">Modo 2 — IA aumentada (Fase 2)</div>
+    <p>Claude API procesa el texto completo en contexto, detecta problemas que las regex no capturan
+    (ironía, ambigüedad implícita, tono) y genera sugerencias personalizadas según asignatura y nivel.</p>
+
+    <div class="section-sub">Criterios predefinidos (muestra)</div>
+    <div class="criteria-card cl"><h5>CL-001 · Vocabulario técnico acumulado</h5><p>Patrón: 3+ términos técnicos consecutivos sin definición. Acción: señalar cadena, sugerir glosario en pie de ítem.</p></div>
+    <div class="criteria-card cl"><h5>CL-002 · Instrucciones con subordinadas múltiples</h5><p>Patrón: oraciones con más de 2 cláusulas subordinadas. Acción: dividir en instrucciones cortas numeradas.</p></div>
+    <div class="criteria-card vp"><h5>VP-001 · Instrucciones en bloque sin estructura visual</h5><p>Patrón: párrafo con más de 3 instrucciones sin viñetas. Acción: convertir a lista numerada.</p></div>
+    <div class="criteria-card vp"><h5>VP-002 · Tiempo sin distribución por sección</h5><p>Patrón: mención de tiempo total sin desglose. Acción: agregar tabla de tiempo sugerido por ítem.</p></div>
+    <div class="criteria-card ae"><h5>AE-001 · Lenguaje prohibitivo</h5><p>Patrón: "no se aceptará", "será sancionado", "queda prohibido". Acción: reformular en positivo.</p></div>
+    <div class="criteria-card ae"><h5>AE-002 · Consecuencias negativas explícitas</h5><p>Patrón: "de lo contrario", "si no", "será inválido". Acción: reformular orientado a puntaje parcial.</p></div>
+  </div>
+
+  <!-- ══ 7. IA + EDITOR ══ -->
+  <div id="s7" class="section">
+    <div class="section-title">7. Integración IA + Editor Interactivo</div>
+    <div class="section-sub">Pipeline de análisis + edición</div>
+    <div class="code-block"><span class="code-comment">// Pipeline completo (producción)</span>
+
+1. <span class="code-key">Extracción</span>: mammoth.js → texto + estructura (párrafos, ítems, títulos)
+2. <span class="code-key">Pre-análisis</span>: Matrices JSON → detección rápida (O(n) sobre texto)
+3. <span class="code-key">IA (opcional)</span>: Claude API → análisis contextual profundo
+4. <span class="code-key">Fusión</span>: Merge de resultados, deduplificación, ranking por evidencia
+5. <span class="code-key">Renderizado</span>: Texto → HTML con &lt;span data-sug="id" class="cat"&gt;
+6. <span class="code-key">Interacción</span>: Click → activar tarjeta | Aceptar → track-changes
+7. <span class="code-key">Exportación</span>: Estado final → docx.js → archivo .docx adecuado
+    </div>
+
+    <div class="section-sub">Experiencia del editor interactivo</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Elemento visual</th><th>Significado</th><th>Acción del docente</th></tr></thead>
+        <tbody>
+          <tr><td><span class="cat-cl">Subrayado azul</span></td><td>Problema de Comprensión Lectora</td><td>Click → ver sugerencia CL en sidebar</td></tr>
+          <tr><td><span class="cat-vp">Subrayado ámbar</span></td><td>Problema de Velocidad de Procesamiento</td><td>Click → ver sugerencia VP en sidebar</td></tr>
+          <tr><td><span class="cat-ae">Subrayado rosa</span></td><td>Problema de Ansiedad Evaluativa</td><td>Click → ver sugerencia AE en sidebar</td></tr>
+          <tr><td style="color:#16A34A;font-style:italic">Texto verde cursiva</td><td>Texto nuevo (cambio aceptado)</td><td>Visible en modo control de cambios</td></tr>
+          <tr><td style="text-decoration:line-through;color:#EF4444">Texto tachado rojo</td><td>Texto eliminado (cambio aceptado)</td><td>Visible en modo control de cambios</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 8. BASE DE DATOS ══ -->
+  <div id="s8" class="section">
+    <div class="section-title">8. Estructura de Base de Datos</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;margin:1rem 0">
+
+      <div class="db-entity">
+        <div class="entity-head">📋 docentes</div>
+        <div class="entity-fields">
+          <div class="db-field"><span class="field-pk">PK</span> id · UUID</div>
+          <div class="db-field">nombre · VARCHAR(120)</div>
+          <div class="db-field">email · VARCHAR(100) UNIQUE</div>
+          <div class="db-field">password_hash · TEXT</div>
+          <div class="db-field">asignatura · VARCHAR(80)</div>
+          <div class="db-field">nivel_educativo · VARCHAR(50)</div>
+          <div class="db-field">colegio_id · FK → colegios</div>
+          <div class="db-field">idioma_preferido · CHAR(2)</div>
+          <div class="db-field">creado_en · TIMESTAMP</div>
+        </div>
+      </div>
+
+      <div class="db-entity">
+        <div class="entity-head">🏫 colegios</div>
+        <div class="entity-fields">
+          <div class="db-field"><span class="field-pk">PK</span> id · UUID</div>
+          <div class="db-field">nombre · VARCHAR(150)</div>
+          <div class="db-field">rbd · VARCHAR(10)</div>
+          <div class="db-field">comuna · VARCHAR(80)</div>
+          <div class="db-field">region · VARCHAR(80)</div>
+        </div>
+      </div>
+
+      <div class="db-entity">
+        <div class="entity-head">👩‍🎓 cursos</div>
+        <div class="entity-fields">
+          <div class="db-field"><span class="field-pk">PK</span> id · UUID</div>
+          <div class="db-field"><span class="field-fk">FK</span> docente_id → docentes</div>
+          <div class="db-field">nombre · VARCHAR(20) (ej. "5°A")</div>
+          <div class="db-field">nivel · VARCHAR(50)</div>
+          <div class="db-field">anio_escolar · INT</div>
+        </div>
+      </div>
+
+      <div class="db-entity">
+        <div class="entity-head">📄 documentos</div>
+        <div class="entity-fields">
+          <div class="db-field"><span class="field-pk">PK</span> id · UUID</div>
+          <div class="db-field"><span class="field-fk">FK</span> docente_id → docentes</div>
+          <div class="db-field"><span class="field-fk">FK</span> curso_id → cursos</div>
+          <div class="db-field">nombre_archivo · TEXT</div>
+          <div class="db-field">texto_extraido · TEXT</div>
+          <div class="db-field">asignatura · VARCHAR(80)</div>
+          <div class="db-field">subido_en · TIMESTAMP</div>
+        </div>
+      </div>
+
+      <div class="db-entity">
+        <div class="entity-head">🔍 analisis</div>
+        <div class="entity-fields">
+          <div class="db-field"><span class="field-pk">PK</span> id · UUID</div>
+          <div class="db-field"><span class="field-fk">FK</span> documento_id → documentos</div>
+          <div class="db-field">idioma · CHAR(2)</div>
+          <div class="db-field">version_matriz · VARCHAR(10)</div>
+          <div class="db-field">total_sugerencias · INT</div>
+          <div class="db-field">realizado_en · TIMESTAMP</div>
+        </div>
+      </div>
+
+      <div class="db-entity">
+        <div class="entity-head">💡 sugerencias</div>
+        <div class="entity-fields">
+          <div class="db-field"><span class="field-pk">PK</span> id · UUID</div>
+          <div class="db-field"><span class="field-fk">FK</span> analisis_id → analisis</div>
+          <div class="db-field">criterio_id · VARCHAR(20)</div>
+          <div class="db-field">categoria · ENUM(cl,vp,ae)</div>
+          <div class="db-field">texto_original · TEXT</div>
+          <div class="db-field">posicion_inicio · INT</div>
+          <div class="db-field">posicion_fin · INT</div>
+          <div class="db-field">estado · ENUM(pendiente,aceptada,rechazada)</div>
+          <div class="db-field">texto_reemplazo · TEXT</div>
+        </div>
+      </div>
+
+      <div class="db-entity">
+        <div class="entity-head">📊 criterios_matriz</div>
+        <div class="entity-fields">
+          <div class="db-field"><span class="field-pk">PK</span> id · VARCHAR(20)</div>
+          <div class="db-field">categoria · ENUM(cl,vp,ae)</div>
+          <div class="db-field">subcategoria · TEXT</div>
+          <div class="db-field">patron_regex · TEXT</div>
+          <div class="db-field">sensibilidad · ENUM(baja,media,alta)</div>
+          <div class="db-field">nivel_educativo · TEXT[]</div>
+          <div class="db-field">sugerencia_es · TEXT</div>
+          <div class="db-field">sugerencia_fr · TEXT</div>
+          <div class="db-field">justificacion_es · TEXT</div>
+          <div class="db-field">evidencia · VARCHAR(20)</div>
+          <div class="db-field">version · VARCHAR(10)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ 9. COMENTARIOS INTELIGENTES ══ -->
+  <div id="s9" class="section">
+    <div class="section-title">9. Sistema de Comentarios Inteligentes</div>
+    <p>Cada sugerencia incluye 4 capas de información para el docente:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Capa</th><th>Contenido</th><th>Fuente</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1. Categoría</strong></td><td>CL / VP / AE + color identificador</td><td>Clasificación automática del criterio</td></tr>
+          <tr><td><strong>2. Criterio detectado</strong></td><td>Descripción del problema específico</td><td>Matriz de criterios (JSON)</td></tr>
+          <tr><td><strong>3. Sugerencia de ajuste</strong></td><td>Texto reformulado, listo para usar</td><td>Matriz + IA (Fase 2)</td></tr>
+          <tr><td><strong>4. Justificación técnico-pedagógica</strong></td><td>Referencia DUA, autor, año, nivel de evidencia</td><td>Base científica curada</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section-sub">Niveles de evidencia</div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0">
+      <span style="background:#7C3AED;color:#fff;border-radius:50px;padding:.3rem .8rem;font-size:.8rem">Muy alta — Meta-análisis / Revisión sistemática</span>
+      <span style="background:#16A34A;color:#fff;border-radius:50px;padding:.3rem .8rem;font-size:.8rem">Alta — Investigación experimental controlada</span>
+      <span style="background:var(--vp);color:#fff;border-radius:50px;padding:.3rem .8rem;font-size:.8rem">Media — Estudios observacionales / guías ministeriales</span>
+      <span style="background:var(--muted);color:#fff;border-radius:50px;padding:.3rem .8rem;font-size:.8rem">En revisión — Consenso de expertos</span>
+    </div>
+  </div>
+
+  <!-- ══ 10. HOJA DE RUTA ══ -->
+  <div id="s10" class="section">
+    <div class="section-title">10. Hoja de Ruta y Escalabilidad</div>
+    <div class="roadmap">
+      <div class="phase p1">
+        <h4>Fase 1 — MVP</h4>
+        <div class="timeline">📅 Actual · HTML+CSS+JS puro</div>
+        <ul>
+          <li>Prototipo navegable funcional</li>
+          <li>5 pantallas completas</li>
+          <li>Bilingüe ES/FR</li>
+          <li>6 criterios de demostración</li>
+          <li>Editor con track-changes</li>
+          <li>Mock login + mock DB</li>
+        </ul>
+      </div>
+      <div class="phase p2">
+        <h4>Fase 2 — Beta</h4>
+        <div class="timeline">📅 2-3 meses · Next.js + Node + PostgreSQL</div>
+        <ul>
+          <li>BD real con docentes/cursos</li>
+          <li>Login institucional real</li>
+          <li>Carga .docx real (mammoth.js)</li>
+          <li>Matrices cargables (JSON)</li>
+          <li>Exportación .docx adecuado</li>
+          <li>Historial de análisis</li>
+          <li>Piloto con 5-10 docentes</li>
+        </ul>
+      </div>
+      <div class="phase p3">
+        <h4>Fase 3 — Producción</h4>
+        <div class="timeline">📅 4-6 meses · IA + multiescuela</div>
+        <ul>
+          <li>Claude API integrada</li>
+          <li>Matrices por asignatura/nivel</li>
+          <li>Informe PDF de adecuaciones</li>
+          <li>Panel docente con historial</li>
+          <li>Otros instrumentos (guías, rúbricas)</li>
+          <li>Integración Google Docs (opcional)</li>
+          <li>Multiescuela / red educativa</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="alert">
+      🔑 <strong>Dato clave para el cliente:</strong> Todo el sistema está diseñado para que
+      <strong>las matrices de criterios sean el corazón del análisis</strong>.
+      Cuando entregues tu documento de criterios (categorías, subcategorías, patrones, sugerencias,
+      justificaciones y niveles de evidencia), se carga como JSON y el motor lo usa inmediatamente,
+      sin modificar el código.
+    </div>
+  </div>
+
+  <hr style="border:none;border-top:1px solid var(--border);margin:2rem 0">
+  <p style="text-align:center;font-size:.8rem;color:var(--muted)">
+    AccesoEval © 2026 · Desarrollado para Escuela Patrimonial California · Base pedagógica: DUA/UDL (CAST, 2018)
+  </p>
+
+</div><!-- /page -->
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AccesoEval — Evaluación Inclusiva Inteligente</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PANTALLA 1 — LANDING
+══════════════════════════════════════════════ -->
+<section id="screen-landing" class="screen">
+  <div class="landing-inner fade-in">
+    <div class="landing-logo">📋</div>
+    <h1 class="landing-title" id="txt-appName">AccesoEval</h1>
+    <p class="landing-subtitle" id="txt-tagline">Evaluación Inclusiva Inteligente</p>
+    <p class="landing-subtitle" style="font-size:.85rem;opacity:.75;margin-top:-.75rem;margin-bottom:2rem" id="txt-taglineSub">
+      Herramienta de revisión pedagógica para adecuaciones de acceso basada en el DUA
+    </p>
+    <div class="lang-selector">
+      <button class="lang-btn active" onclick="setLang('es')" id="lang-es">🇨🇱 Español</button>
+      <button class="lang-btn" onclick="setLang('fr')" id="lang-fr">🇫🇷 Français</button>
+    </div>
+    <button class="btn btn-primary landing-cta" onclick="entrarDirecto()">
+      <span id="txt-startBtn">Comenzar</span> →
+    </button>
+    <div class="landing-badges">
+      <span class="badge" id="txt-badge1">Basado en DUA</span>
+      <span class="badge" id="txt-badge2">Accesibilidad Cognitiva</span>
+      <span class="badge" id="txt-badge3">Evaluación Diferenciada</span>
+      <span class="badge" id="txt-badge4">NEE</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PANTALLA 2 — LOGIN
+══════════════════════════════════════════════ -->
+<section id="screen-login" class="screen hidden">
+  <div class="login-layout">
+    <div class="login-side-brand">
+      <div class="login-brand-logo" id="txt-login-appName">AccesoEval</div>
+      <p class="login-brand-desc" id="txt-login-desc">
+        Herramienta pedagógica para la revisión inclusiva de evaluaciones escritas, basada en el Diseño Universal para el Aprendizaje.
+      </p>
+      <ul class="login-features" id="login-features-list">
+        <li>Análisis automático de accesibilidad</li>
+        <li>3 categorías de adecuación de acceso</li>
+        <li>Editor interactivo con sugerencias</li>
+        <li>Bilingüe: Español / Français</li>
+        <li>Basado en evidencia científica</li>
+      </ul>
+    </div>
+    <div class="login-side-form">
+      <div class="login-form-box fade-in">
+        <button class="back-btn" onclick="showScreen('landing')">
+          ← <span id="txt-back">Volver</span>
+        </button>
+        <div class="login-mobile-logo" id="txt-login-mobile-logo">AccesoEval</div>
+        <h2 id="txt-loginTitle">Iniciar sesión</h2>
+        <p class="subtitle" id="txt-loginSub">Ingresa con tu correo institucional</p>
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="inp-email" id="txt-emailLabel">Correo institucional</label>
+            <input type="email" id="inp-email" placeholder="nombre@escuela.cl" autocomplete="email">
+            <span class="form-error" id="err-email">Correo no encontrado en la base de datos</span>
+          </div>
+          <div class="form-group">
+            <label for="inp-pass" id="txt-passLabel">Contraseña</label>
+            <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password">
+            <span class="form-error" id="err-pass">Contraseña incorrecta</span>
+          </div>
+          <div class="demo-hint" id="txt-demoHint">
+            💡 Demo: <strong>docente@escuela.cl</strong> / <strong>1234</strong>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="txt-loginBtn">Ingresar →</button>
+        </form>
+        <p class="login-link">
+          <a onclick="showToast(state.lang==='es'?'Disponible en versión final':'Disponible dans la version finale','info')" id="txt-loginLink">
+            ¿Primera vez? Crear cuenta
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PANTALLA 3 — DASHBOARD
+══════════════════════════════════════════════ -->
+<section id="screen-dashboard" class="screen hidden">
+  <header class="app-header">
+    <div class="app-header-logo" id="txt-dash-logo">AccesoEval</div>
+    <div class="app-header-user">
+      <div class="app-lang-switch" aria-label="Idioma">
+        <button type="button" class="app-lang-btn active" data-lang-option="es" onclick="setLang('es')">ES</button>
+        <button type="button" class="app-lang-btn" data-lang-option="fr" onclick="setLang('fr')">FR</button>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="showHelp()" id="txt-dash-helpBtn">? Ayuda</button>
+      <div class="user-info">
+        <strong id="dash-user-name">—</strong>
+        <span id="dash-user-subject">—</span>
+      </div>
+      <div class="user-avatar" id="dash-user-avatar">MG</div>
+    </div>
+  </header>
+  <div class="dashboard-body">
+    <div class="dashboard-welcome">
+      <h1 id="dash-welcome-msg">Bienvenido/a, docente</h1>
+      <p id="txt-welcomeSub">Selecciona o carga una prueba para comenzar el análisis inclusivo</p>
+    </div>
+
+    <div class="scope-panel" aria-labelledby="txt-scope-title">
+      <div class="scope-panel-main">
+        <h2 id="txt-scope-title">Revisión inclusiva de acceso</h2>
+        <p id="txt-scope-desc">
+          Detecta oportunidades de mejora en comprensión lectora, velocidad de procesamiento y ansiedad evaluativa.
+        </p>
+      </div>
+      <div class="scope-panel-rules">
+        <span id="txt-scope-rule1">Accesibilidad y claridad lingüística</span>
+        <span id="txt-scope-rule2">Formato visual y carga cognitiva</span>
+        <span id="txt-scope-rule3">No altera objetivos, contenidos ni nivel cognitivo</span>
+      </div>
+    </div>
+
+    <div class="teacher-info-card">
+      <h4 id="txt-teacherCard">Información del docente</h4>
+      <div class="teacher-grid">
+        <div class="teacher-field">
+          <label id="lbl-nombre">Docente</label>
+          <span id="info-nombre">—</span>
+        </div>
+        <div class="teacher-field">
+          <label id="lbl-asignatura">Asignatura</label>
+          <span id="info-asignatura">—</span>
+        </div>
+        <div class="teacher-field">
+          <label id="lbl-cursos">Cursos</label>
+          <span id="info-cursos">—</span>
+        </div>
+        <div class="teacher-field">
+          <label id="lbl-nivel">Nivel</label>
+          <span id="info-nivel">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-title" id="txt-uploadTitle">Cargar prueba escrita</div>
+      <div class="card-desc" id="txt-uploadDesc">Sube el documento Word (.docx) de la prueba que deseas revisar</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" accept=".docx,.doc" id="file-input">
+        <div class="upload-icon">📄</div>
+        <strong id="txt-uploadBtn">Seleccionar archivo .docx</strong>
+        <span id="txt-uploadDrop">o arrastra el archivo aquí</span>
+        <span style="display:block;margin-top:.4rem;font-size:.72rem;color:var(--text-muted)" id="txt-uploadFormats">
+          Formatos: .docx — Máx. 10 MB
+        </span>
+      </div>
+      <div class="file-selected hidden" id="file-selected-info">
+        <div class="file-icon">📝</div>
+        <div class="file-info">
+          <strong id="file-name-display">—</strong>
+          <span id="file-size-display">—</span>
+        </div>
+        <button class="btn-icon" id="btn-clear-file" title="Quitar">✕</button>
+      </div>
+      <div style="margin-top:1.2rem;display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" id="btn-analyze" disabled>
+          🔍 <span id="txt-analyzeBtn">Analizar prueba</span>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="loadDemoAndAnalyze()">
+          ▶ <span id="txt-demoBtn">Demo rápida</span>
+        </button>
+      </div>
+
+      <div class="text-review-box">
+        <label for="paste-input" id="txt-pasteLabel">O pega el texto de la prueba</label>
+        <textarea id="paste-input" rows="8" placeholder="Pega aquí instrucciones, preguntas o secciones de una prueba escrita..."></textarea>
+        <div class="paste-actions">
+          <span id="paste-counter">0 palabras</span>
+          <button class="btn btn-primary btn-sm" id="btn-analyze-text" disabled>
+            <span id="txt-analyzeTextBtn">Analizar texto pegado</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Separador -->
+      <div style="display:flex;align-items:center;gap:.75rem;margin-top:1.2rem">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:.73rem;color:var(--text-muted)">o visualiza con</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+
+      <!-- Panel OnlyOffice DocSpace -->
+      <div style="margin-top:.9rem">
+
+        <!-- Estado: Desconectado -->
+        <div id="oo-panel-disconnected">
+          <button class="oo-connect-toggle" id="btn-oo-toggle" onclick="toggleOnlyOfficeForm()">
+            <span class="oo-connect-logo">
+              <!-- OnlyOffice logo SVG -->
+              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                <rect width="32" height="32" rx="6" fill="#FF6F3E"/>
+                <path d="M16 8C11.582 8 8 11.582 8 16s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm0 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z" fill="#fff"/>
+              </svg>
+            </span>
+            <span id="txt-oo-btn">Conectar con OnlyOffice para vista fiel</span>
+            <span class="oo-chevron" id="oo-chevron">▾</span>
+          </button>
+          <p style="font-size:.71rem;color:var(--text-muted);margin-top:.4rem;text-align:center" id="txt-oo-hint">
+            Sube el documento a tu DocSpace y lo muestra con fidelidad 100% de Word
+          </p>
+
+          <!-- Formulario de conexión -->
+          <div class="oo-form-panel hidden" id="oo-form-panel">
+            <div class="oo-form-field">
+              <label for="oo-portal-url" id="lbl-oo-url">URL de tu portal DocSpace</label>
+              <input type="url" id="oo-portal-url" placeholder="https://tuescuela.onlyoffice.io"
+                     autocomplete="url" spellcheck="false">
+            </div>
+            <div class="oo-form-field">
+              <label for="oo-email" id="lbl-oo-email">Email</label>
+              <input type="email" id="oo-email" placeholder="docente@escuela.cl"
+                     autocomplete="email">
+            </div>
+            <div class="oo-form-field">
+              <label for="oo-password" id="lbl-oo-password">Contraseña</label>
+              <input type="password" id="oo-password" placeholder="••••••••"
+                     autocomplete="current-password">
+            </div>
+            <div class="oo-form-info" id="txt-oo-form-info">
+              💡 Crea tu cuenta gratis en
+              <a href="https://www.onlyoffice.com/docspace-registration.aspx" target="_blank"
+                 rel="noopener">onlyoffice.com</a>
+            </div>
+            <button class="btn btn-primary btn-full" id="btn-oo-connect" onclick="loginOnlyOffice()">
+              <span id="txt-oo-connect">Conectar con OnlyOffice</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Estado: Conectado -->
+        <div id="oo-panel-connected" class="hidden">
+          <div class="oo-connected-badge">
+            <span class="oo-badge-icon">
+              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                <rect width="32" height="32" rx="6" fill="#FF6F3E"/>
+                <path d="M16 8C11.582 8 8 11.582 8 16s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm0 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z" fill="#fff"/>
+              </svg>
+            </span>
+            <div style="flex:1;min-width:0">
+              <div class="oo-badge-name" id="oo-user-name">—</div>
+              <div class="oo-badge-email" id="oo-user-portal">—</div>
+            </div>
+            <button onclick="logoutOnlyOffice()" class="oo-disconnect-btn" id="txt-oo-disconnect">
+              Desconectar
+            </button>
+          </div>
+          <button class="btn btn-primary" id="btn-oo-upload"
+            style="width:100%;margin-top:.6rem;display:flex;align-items:center;justify-content:center;gap:.5rem"
+            onclick="subirYAbrirEnOnlyOffice()" disabled>
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" width="14" height="14">
+              <rect width="32" height="32" rx="6" fill="#FF6F3E"/>
+              <path d="M16 8C11.582 8 8 11.582 8 16s3.582 8 8 8 8-3.582 8-8-3.582-8-8-8zm0 3.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z" fill="#fff"/>
+            </svg>
+            <span id="txt-oo-upload">Abrir evaluación en OnlyOffice</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-title" id="txt-recentTitle">Pruebas recientes</div>
+      <div class="recent-docs">
+        <div class="recent-doc-item" onclick="loadDemoAndAnalyze()">
+          <div style="font-size:1.5rem">📄</div>
+          <div class="recent-doc-meta">
+            <strong>Evaluación_Matemáticas_5A_S2.docx</strong>
+            <span id="txt-recent1-meta">Hace 2 días — 5°A</span>
+          </div>
+          <span class="recs-tag cl" id="txt-recent1-tag">6 sugerencias</span>
+        </div>
+        <div class="recent-doc-item" onclick="showToast(state.lang==='es'?'Demo no disponible para este archivo':'Démo non disponible pour ce fichier','info')">
+          <div style="font-size:1.5rem">📄</div>
+          <div class="recent-doc-meta">
+            <strong>Prueba_Fracciones_6A_v2.docx</strong>
+            <span id="txt-recent2-meta">Hace 5 días — 6°A</span>
+          </div>
+          <span class="recs-tag vp" id="txt-recent2-tag">3 sugerencias</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PANTALLA 4 — ANALIZANDO
+══════════════════════════════════════════════ -->
+<section id="screen-analyzing" class="screen hidden">
+  <div class="analyzing-box fade-in">
+    <div class="analyzing-spinner"></div>
+    <h2 id="txt-analyzingTitle">Analizando prueba...</h2>
+    <p id="txt-analyzingDesc">El sistema está revisando el documento con criterios pedagógicos inclusivos</p>
+    <div class="analyzing-steps">
+      <div class="step-item" id="step-1">
+        <div class="step-dot" id="dot-1">1</div>
+        <span id="txt-step1">Leyendo documento</span>
+      </div>
+      <div class="step-item" id="step-2">
+        <div class="step-dot" id="dot-2">2</div>
+        <span id="txt-step2">Identificando criterios DUA</span>
+      </div>
+      <div class="step-item" id="step-3">
+        <div class="step-dot" id="dot-3">3</div>
+        <span id="txt-step3">Detectando oportunidades de mejora</span>
+      </div>
+      <div class="step-item" id="step-4">
+        <div class="step-dot" id="dot-4">4</div>
+        <span id="txt-step4">Generando sugerencias pedagógicas</span>
+      </div>
+      <div class="step-item" id="step-5">
+        <div class="step-dot" id="dot-5">5</div>
+        <span id="txt-step5">Preparando editor interactivo</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PANTALLA 5 — EDITOR INTERACTIVO
+══════════════════════════════════════════════ -->
+<section id="screen-editor" class="screen hidden">
+  <header class="app-header">
+    <div class="app-header-logo" id="txt-editor-logo">AccesoEval</div>
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <div class="app-lang-switch" aria-label="Idioma">
+        <button type="button" class="app-lang-btn active" data-lang-option="es" onclick="setLang('es')">ES</button>
+        <button type="button" class="app-lang-btn" data-lang-option="fr" onclick="setLang('fr')">FR</button>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="showHelp()" id="txt-editor-helpBtn">? Ayuda</button>
+      <div class="user-info">
+        <strong id="editor-user-name">—</strong>
+        <span id="editor-doc-name" style="font-size:.75rem;color:var(--text-muted)">—</span>
+      </div>
+      <div class="user-avatar" id="editor-user-avatar">MG</div>
+    </div>
+  </header>
+
+  <div class="editor-layout">
+    <!-- ── Panel documento ── -->
+    <div class="editor-doc-panel" id="doc-panel">
+      <div class="doc-page" id="document-content">
+        <h2>EVALUACIÓN SUMATIVA — MATEMÁTICAS</h2>
+        <div class="doc-meta">
+          5° Básico — Segundo Semestre &nbsp;|&nbsp; Escuela Patrimonial California
+        </div>
+        <div class="doc-header-fields">
+          <span>Nombre: _______________________</span>
+          <span>Fecha: _______________</span>
+          <span>Curso: _________</span>
+          <span>Puntaje: _____ / 85 pts.</span>
+        </div>
+
+        <div class="doc-section-title">INSTRUCCIONES GENERALES</div>
+        <p>
+          <span class="highlight vp" data-sug="sug_02" id="h2"
+            >Lee atentamente cada pregunta antes de responder.</span>
+          <span class="highlight vp" data-sug="sug_05" id="h5"
+            > Tienes 90 minutos para completar esta evaluación.</span>
+          Responde únicamente con lápiz pasta azul o negro.
+          <span class="highlight ae" data-sug="sug_01" id="h1"
+            > No se aceptarán respuestas hechas con lápiz grafito ni con corrector.
+            Cualquier conducta deshonesta será sancionada según el reglamento escolar.</span>
+        </p>
+
+        <div class="doc-section-title">ÍTEM 1: NÚMEROS Y OPERACIONES (30 pts.)</div>
+        <p>
+          Resuelve las siguientes operaciones
+          <span class="highlight cl" data-sug="sug_03" id="h3"
+            > aplicando el orden jerárquico de las operaciones matemáticas fundamentales,
+            considerando la precedencia entre multiplicación, división, adición y sustracción</span>:
+        </p>
+        <p style="font-family:var(--font);line-height:2.4;font-size:.9rem">
+          1. &nbsp;245 + 378 × 2 − 156 ÷ 4 = ___________<br>
+          2. &nbsp;(543 − 217) × (128 + 96) = ___________<br>
+          3. &nbsp;1.250 + 3.680 − 970 = ___________<br>
+          4. &nbsp;7 × 8 − 48 ÷ 6 + 15 = ___________<br>
+          5. &nbsp;2.340 ÷ 4 + 890 × 3 = ___________
+        </p>
+
+        <div class="doc-section-title">ÍTEM 2: FRACCIONES (25 pts.)</div>
+        <p>
+          A continuación encontrarás
+          <span class="highlight cl" data-sug="sug_06" id="h6"
+            > problemas de aplicación que requieren el manejo conceptual y procedimental
+            de operatoria con fracciones heterogéneas</span>.
+          <span class="highlight ae" data-sug="sug_04" id="h4"
+            > Debes demostrar el procedimiento completo,
+            de lo contrario la respuesta no será válida.</span>
+        </p>
+        <p style="font-family:var(--font);line-height:2.4;font-size:.9rem">
+          1. &nbsp;²⁄₃ + ¼ = ___________<br>
+          2. &nbsp;³⁄₅ − ⅓ = ___________<br>
+          3. &nbsp;½ × ²⁄₇ = ___________<br>
+          4. &nbsp;Un pastel se divide en 8 partes iguales. Paula come ³⁄₈ y su hermano come ¼.
+             ¿Qué fracción queda? Muestra el procedimiento.<br>
+          &nbsp;&nbsp;&nbsp;R: ___________
+        </p>
+
+        <div class="doc-section-title">ÍTEM 3: PROBLEMAS DE APLICACIÓN (30 pts.)</div>
+        <p>Lee cada problema con calma y resuelve. Muestra tu trabajo.</p>
+        <p>
+          <strong>Problema 1:</strong> Una librería tiene 1.240 libros. Vende 378 el lunes
+          y recibe 215 nuevos el martes. ¿Cuántos libros hay ahora?
+        </p>
+        <p style="font-family:var(--font);font-size:.85rem;line-height:2.2">
+          Operación: ___________________________________<br>
+          Respuesta: ___________ libros.
+        </p>
+        <p>
+          <strong>Problema 2:</strong> En una sala hay 32 estudiantes. Si ³⁄₄ de ellos
+          aprobaron la prueba, ¿cuántos aprobaron?
+        </p>
+        <p style="font-family:var(--font);font-size:.85rem;line-height:2.2">
+          Operación: ___________________________________<br>
+          Respuesta: ___________ estudiantes.
+        </p>
+        <p>
+          <strong>Problema 3:</strong> El señor López tiene $45.600. Gasta $18.250 en
+          mercadería y $9.800 en arriendo. ¿Cuánto le queda?
+        </p>
+        <p style="font-family:var(--font);font-size:.85rem;line-height:2.2">
+          Operación: ___________________________________<br>
+          Respuesta: $___________
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Sidebar sugerencias ── -->
+    <div class="editor-sidebar" id="editor-sidebar">
+      <div class="sidebar-header">
+        <h3 id="txt-editorTitle">Editor de adecuaciones</h3>
+        <button class="btn-icon hidden" id="sidebar-close-btn" onclick="hideSidebar()">✕</button>
+      </div>
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" id="tab-btn-suggestions" onclick="switchSidebarTab('suggestions')">
+          <span id="txt-tabSuggestions">Sugerencias</span>
+          <span id="sug-badge" style="display:inline-block;background:var(--primary);color:#fff;border-radius:50px;font-size:.65rem;padding:1px 6px;margin-left:4px">6</span>
+        </button>
+        <button class="sidebar-tab" id="tab-btn-report" onclick="switchSidebarTab('report')">
+          <span id="txt-tabReport">Informe</span>
+        </button>
+        <button class="sidebar-tab" id="tab-btn-legend" onclick="switchSidebarTab('legend')">
+          <span id="txt-tabLegend">Leyenda</span>
+        </button>
+      </div>
+
+      <!-- Tab: Sugerencias -->
+      <div class="sidebar-body" id="tab-body-suggestions">
+        <div id="suggestions-list"></div>
+      </div>
+
+      <!-- Tab: Informe Matriz TPA -->
+      <div class="sidebar-body hidden" id="tab-body-report">
+        <div id="matrix-report-content">
+          <p style="font-size:.82rem;color:var(--text-muted);text-align:center;padding:2rem 1rem">
+            El informe de criterios aparece aquí cuando se analiza un documento real.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tab: Leyenda -->
+      <div class="sidebar-body hidden" id="tab-body-legend">
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem;line-height:1.5" id="txt-legendIntro">
+          Cada color representa una categoría. Las sugerencias NO modifican los objetivos de aprendizaje.
+        </p>
+        <div class="legend-item">
+          <div class="legend-dot cl"></div>
+          <div>
+            <h4 id="txt-leg-cl">Comprensión Lectora</h4>
+            <p id="txt-leg-cl-desc">Vocabulario técnico sin definir, instrucciones complejas o ambiguas que dificultan el acceso al contenido evaluado.</p>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot vp"></div>
+          <div>
+            <h4 id="txt-leg-vp">Velocidad de Procesamiento</h4>
+            <p id="txt-leg-vp-desc">Instrucciones en bloque, formato denso y exceso de información simultánea que generan sobrecarga cognitiva.</p>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot ae"></div>
+          <div>
+            <h4 id="txt-leg-ae">Ansiedad Evaluativa</h4>
+            <p id="txt-leg-ae-desc">Frases restrictivas, advertencias negativas y lenguaje amenazante que elevan el estrés en la evaluación.</p>
+          </div>
+        </div>
+        <div style="margin-top:1rem">
+          <div class="legend-section">Base Pedagógica</div>
+          <div class="legend-note" id="txt-leg-note">
+            AccesoEval se basa en el <strong>Diseño Universal para el Aprendizaje (DUA)</strong>,
+            teoría de carga cognitiva y evidencia sobre evaluación diferenciada.
+            <strong>No modifica objetivos de aprendizaje ni nivel cognitivo.</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra resumen -->
+      <div class="summary-bar">
+        <span class="summary-pill cl" id="summary-cl">● CL: 2</span>
+        <span class="summary-pill vp" id="summary-vp">● VP: 2</span>
+        <span class="summary-pill ae" id="summary-ae">● AE: 2</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de exportación -->
+  <div class="export-bar">
+    <span class="export-bar-info" id="txt-exportInfo">
+      Acepta o rechaza las sugerencias y exporta el documento adecuado
+    </span>
+    <div class="export-bar-actions">
+      <button class="btn btn-sm btn-outline" onclick="acceptAll()" id="txt-acceptAllBtn">✓ Aceptar todas</button>
+      <button class="btn btn-sm btn-primary" onclick="exportDoc()">
+        ⬇ <span id="txt-exportBtn">Exportar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Botón flotante móvil -->
+  <button class="mobile-sidebar-toggle" onclick="toggleSidebar()" aria-label="Ver sugerencias">
+    💬
+  </button>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     MODAL — AYUDA / LEYENDA
+══════════════════════════════════════════════ -->
+<div id="modal-help" class="modal-overlay hidden" onclick="handleModalOverlayClick(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header">
+      <h2 id="txt-helpTitle">Guía de uso — AccesoEval</h2>
+      <button class="modal-close" onclick="hideHelp()">✕</button>
+    </div>
+
+    <div class="legend-section" id="txt-modal-catTitle">Categorías de análisis</div>
+    <div class="legend-item">
+      <div class="legend-dot cl"></div>
+      <div>
+        <h4 id="txt-modal-cl">Comprensión Lectora</h4>
+        <p id="txt-modal-cl-desc">Detecta vocabulario técnico sin definir, instrucciones complejas y estructuras gramaticales que dificultan la comprensión para estudiantes con NEE de lectura.</p>
+      </div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot vp"></div>
+      <div>
+        <h4 id="txt-modal-vp">Velocidad de Procesamiento</h4>
+        <p id="txt-modal-vp-desc">Identifica exceso de información por ítem, formato denso sin descansos visuales y elementos que generan sobrecarga cognitiva.</p>
+      </div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot ae"></div>
+      <div>
+        <h4 id="txt-modal-ae">Ansiedad Evaluativa</h4>
+        <p id="txt-modal-ae-desc">Señala frases de advertencia negativas, lenguaje amenazante y restricciones que pueden aumentar el estrés evaluativo.</p>
+      </div>
+    </div>
+
+    <div class="legend-section" id="txt-modal-howTitle">¿Cómo usar el editor?</div>
+    <div style="font-size:.82rem;line-height:1.8;color:var(--text)">
+      <p id="txt-modal-how1">① Haz clic sobre cualquier <span style="background:var(--cl-bg);border-bottom:2px solid var(--cl-color);padding:0 2px;border-radius:2px">texto subrayado</span> en el documento para activar la sugerencia correspondiente.</p>
+      <br>
+      <p id="txt-modal-how2">② En el panel de sugerencias, revisa la justificación pedagógica y presiona <strong>Aceptar</strong> para aplicar el cambio o <strong>Rechazar</strong> para mantener el original.</p>
+      <br>
+      <p id="txt-modal-how3">③ Los cambios aceptados se muestran con <span class="track-delete">tachado rojo</span> (texto eliminado) y <span class="track-insert">verde cursiva</span> (texto nuevo), al estilo control de cambios.</p>
+    </div>
+
+    <div class="legend-note" style="margin-top:1.2rem" id="txt-modal-note">
+      <strong>⚠️ Importante:</strong> AccesoEval <strong>NO</strong> modifica los objetivos de aprendizaje,
+      contenidos curriculares ni el nivel cognitivo de la evaluación. Solo sugiere mejoras en
+      accesibilidad, claridad lingüística y formato visual, respetando el DUA.
+    </div>
+
+    <button class="btn btn-primary btn-full" style="margin-top:1.5rem" onclick="hideHelp()" id="txt-modal-close">
+      Entendido — Comenzar revisión ✓
+    </button>
+  </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toast-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.23/dist/docx-preview.min.js"></script>
+<!-- OnlyOffice DocSpace SDK: se carga dinámicamente al conectar -->
+<script src="app.js"></script>
+</body>
+</html>
