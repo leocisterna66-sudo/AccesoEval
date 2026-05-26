@@ -96,6 +96,13 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   min-height: 48px;
   white-space: nowrap;
 }
+.btn:disabled {
+  background: var(--border) !important;
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
 .btn-primary {
   background: var(--primary);
   color: #fff;
