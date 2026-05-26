@@ -17,8 +17,8 @@
 //  Dejar en blanco ("") para desactivar la integración.
 // ══════════════════════════════════════════════════════════════
 const OO_CONFIG = {
-  portalUrl: '',   // ← pegar URL del portal (ej: https://miescuela.onlyoffice.io)
-  apiToken:  '',   // ← pegar API Key generada en Developer Tools
+  portalUrl: 'https://docspace-a2zj7a.onlyoffice.com',   // ← pegar URL del portal (ej: https://miescuela.onlyoffice.io)
+  apiToken:  'sk-9f08401474da26efe50c4a91091d6967ae1a5a6e5b9281fc29e29c91de79b8b5',   // ← pegar API Key generada en Developer Tools
 };
 // ══════════════════════════════════════════════════════════════
 // FIN DE CONFIGURACIÓN DEL ADMINISTRADOR
