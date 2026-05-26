@@ -1619,8 +1619,9 @@ async function loginOnlyOffice() {
       throw new Error(errData?.error?.message || `HTTP ${authResp.status}`);
     }
     const authData = await authResp.json();
-    const token    = authData?.response?.token;
-    if (!token) throw new Error('No se recibió token del servidor.');
+    const rawToken = authData?.response?.token;
+    if (!rawToken) throw new Error('No se recibió token del servidor.');
+    const token    = rawToken.startsWith('Bearer ') ? rawToken : 'Bearer ' + rawToken;
 
     const folderResp = await fetch(`${portalUrl}/api/2.0/files/@my`, {
       headers: { 'Authorization': token, 'Accept': 'application/json' },
@@ -1685,7 +1686,8 @@ function initOnlyOfficeSession() {
   // 1. Config centralizada del administrador: transparente para todos los docentes
   if (OO_CONFIG.portalUrl && OO_CONFIG.apiToken) {
     state.ooUrl   = OO_CONFIG.portalUrl.trim().replace(/\/+$/, '');
-    state.ooToken = OO_CONFIG.apiToken.trim();
+    const rawToken = OO_CONFIG.apiToken.trim();
+    state.ooToken = rawToken.startsWith('Bearer ') ? rawToken : 'Bearer ' + rawToken;
     state.ooEmail = 'Compartido por el centro educativo';
 
     // Obtener folderId en segundo plano (sin bloquear la UI)
