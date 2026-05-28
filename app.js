@@ -1846,6 +1846,7 @@ async function mostrarOnlyOfficeViewer() {
     const iframe  = document.getElementById('oo-ds-frame');
     const loading = document.getElementById('oo-viewer-loading');
     DocSpace.SDK.initViewer({
+      src:     state.ooUrl,
       frameId: 'oo-ds-frame',
       id:      state.ooFileId,
       width:   '100%',
