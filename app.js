@@ -1856,31 +1856,61 @@ async function mostrarOnlyOfficeViewer() {
           if (loading) loading.style.display = 'none';
           if (iframe)  iframe.style.display  = 'block';
         },
-        onLoadComponentError: (err) => {
+        onLoadComponentError: async (err) => {
           console.error('DocSpace viewer error:', err);
-          if (loading) loading.innerHTML = `<p style="color:var(--danger)">${
-            L === 'es'
-              ? 'Error al cargar el visor. Revisa que tu portal DocSpace permita este dominio en Developer Tools.'
-              : 'Erreur de chargement. Vérifiez les Developer Tools de votre portail.'
-          }</p>`;
+          showToast(L === 'es'
+            ? '⚠️ Conexión con OnlyOffice bloqueada. Cargando visor alternativo de respaldo...'
+            : '⚠️ Connexion avec OnlyOffice bloquée. Chargement de l\'aperçu de secours...', 'warning');
+
+          const palabras = state.fileText ? state.fileText.split(/\s+/).filter(Boolean).length : 0;
+          const parrafos = state.fileParrafos.length;
+          docContent.innerHTML = `
+            <div class="analysis-source-banner docx-banner">
+              <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                📄 ${state.fileName}
+              </span>
+              <span>
+                ${parrafos} ${L === 'es' ? 'párrafos' : 'paragraphes'} · ${palabras} ${L === 'es' ? 'palabras' : 'mots'}
+              </span>
+              <span class="docx-fidelity-note">
+                ${L === 'es'
+                  ? 'Cargado en modo visor local por seguridad de red/navegador.'
+                  : 'Chargé en mode aperçu de secours en raison de la sécurité.'}
+              </span>
+            </div>
+            <div id="docx-preview-target"></div>`;
+          const target = document.getElementById('docx-preview-target');
+          await renderizarDocx(target);
         },
       },
     });
   } catch (err) {
     console.error('Error iniciando visor OnlyOffice:', err);
-    const loading = document.getElementById('oo-viewer-loading');
-    if (loading) loading.innerHTML = `
-      <p style="color:var(--danger);font-size:.85rem;line-height:1.6">
-        ⚠️ ${err.message}<br>
-        <small>${L === 'es'
-          ? 'Asegúrate de que la app se sirve desde un servidor (no file://) y que tu dominio está registrado en Developer Tools de DocSpace.'
-          : 'Assurez-vous que l\'application est servie depuis un serveur (pas file://) et que votre domaine est enregistré dans Developer Tools.'
-        }</small>
-      </p>`;
+    showToast(L === 'es'
+      ? '⚠️ OnlyOffice no disponible. Cargando visor alternativo de respaldo...'
+      : '⚠️ OnlyOffice non disponible. Chargement de l\'aperçu de secours...', 'warning');
+
+    const palabras = state.fileText ? state.fileText.split(/\s+/).filter(Boolean).length : 0;
+    const parrafos = state.fileParrafos.length;
+    docContent.innerHTML = `
+      <div class="analysis-source-banner docx-banner">
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          📄 ${state.fileName}
+        </span>
+        <span>
+          ${parrafos} ${L === 'es' ? 'párrafos' : 'paragraphes'} · ${palabras} ${L === 'es' ? 'palabras' : 'mots'}
+        </span>
+        <span class="docx-fidelity-note">
+          ${L === 'es'
+            ? 'Cargado en modo visor local por restricción de navegador.'
+            : 'Chargé en mode aperçu de secours.'}
+        </span>
+      </div>
+      <div id="docx-preview-target"></div>`;
+    const target = document.getElementById('docx-preview-target');
+    await renderizarDocx(target);
   }
 }
-
-// ══════════════════════════════════════════════════════════════
 //  MOTOR MATRIZ TPA — 3 Categorías / 17 Criterios
 //  Fuente: "PROYECTO Revisor de evaluaciones.docx"
 // ══════════════════════════════════════════════════════════════
