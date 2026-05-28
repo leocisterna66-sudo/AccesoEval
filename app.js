@@ -1804,7 +1804,7 @@ async function loadDocSpaceSDK(portalUrl) {
     if (existing) { existing.addEventListener('load', resolve); return; }
     const script   = document.createElement('script');
     script.id      = 'docspace-sdk-script';
-    script.src     = `onlyoffice-sdk.js`;
+    script.src     = `onlyoffice-sdk.js?v=1.0.2`;
     script.onload  = resolve;
     script.onerror = () => reject(new Error('No se pudo cargar el SDK de OnlyOffice DocSpace.'));
     document.head.appendChild(script);
