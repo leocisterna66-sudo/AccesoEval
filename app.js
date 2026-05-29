@@ -451,7 +451,6 @@ const state = {
   fileHtml:          '',
   fileHasTables:     false,
   fileBuffer:        null,   // ArrayBuffer original para docx-preview
-  filePublicUrl:     null,   // URL pública temporal (tmpfiles.org) para Office Online Viewer
   sourceMode:        'demo', // demo | file | text
   demoDocumentHtml:  '',
   // ── OnlyOffice DocSpace ─────────────────────────────────
@@ -742,7 +741,6 @@ function clearFile() {
   state.sourceMode = 'demo';
   state.fileHtml = '';
   state.fileHasTables = false;
-  state.filePublicUrl = null;
   state.ooFileId = null;
   state.ooViewerActive = false;
   document.getElementById('file-input').value = '';
@@ -794,7 +792,6 @@ function analyzePastedText() {
   state.fileBuffer = null;
   state.fileHtml = '';
   state.fileHasTables = false;
-  state.filePublicUrl = null;
   startAnalysis();
 }
 
@@ -1466,6 +1463,43 @@ function exportarModoReal() {
     L==='es'
       ? `✓ Informe descargado: ${nombreBase}_INFORME_REVISION.docx`
       : `✓ Rapport téléchargé: ${nombreBase}_RAPPORT_REVISION.docx`,
+    'success', 5000
+  );
+}
+
+// ── Exportar documento editado con cambios aplicados ──────────
+function exportarDocumentoConCambios() {
+  const L = state.lang;
+  const page = document.querySelector('.docx-structured-page');
+  if (!page) {
+    showToast(L === 'es' ? 'Abre el editor primero (✏️ Editor con sugerencias)' : 'Ouvrez d\'abord l\'éditeur', 'error');
+    return;
+  }
+
+  // Clonar el nodo para no tocar el DOM visible
+  const clone = page.cloneNode(true);
+
+  // Aplicar cambios aceptados: mantener track-insert, eliminar track-delete
+  clone.querySelectorAll('.track-delete').forEach(el => el.remove());
+  clone.querySelectorAll('.track-insert').forEach(el => {
+    const text = document.createTextNode(el.textContent);
+    el.replaceWith(text);
+  });
+
+  // Limpiar spans de sugerencias (inline-finding) dejando solo el texto
+  clone.querySelectorAll('.inline-finding').forEach(el => {
+    el.replaceWith(document.createTextNode(el.textContent));
+  });
+
+  const nombreBase = (state.fileName || 'documento').replace(/\.docx?$/i, '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const titulo = L === 'es' ? 'Documento con adecuaciones — AccesoEval' : 'Document avec adaptations — AccèsÉval';
+
+  descargarComoDoc(clone.innerHTML, `${nombreBase}_ADECUADO.docx`, titulo);
+
+  showToast(
+    L === 'es'
+      ? `✓ Documento descargado: ${nombreBase}_ADECUADO.docx`
+      : `✓ Document téléchargé: ${nombreBase}_ADAPTE.docx`,
     'success', 5000
   );
 }
@@ -2200,25 +2234,6 @@ const CRITERIOS_ANALISIS = [
   },
 ];
 
-// ── Subida temporal a tmpfiles.org para Office Online Viewer ──
-async function uploadToTempHost(file) {
-  try {
-    const form = new FormData();
-    form.append('file', file);
-    const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: form });
-    if (!res.ok) throw new Error('Upload failed: ' + res.status);
-    const json = await res.json();
-    const pageUrl = json?.data?.url;
-    if (!pageUrl) throw new Error('No URL en respuesta');
-    // tmpfiles.org devuelve https://tmpfiles.org/XXXX/file.docx
-    // El enlace de descarga directa es https://tmpfiles.org/dl/XXXX/file.docx
-    return pageUrl.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-  } catch (err) {
-    console.warn('No se pudo subir al hosting temporal:', err);
-    return null;
-  }
-}
-
 // ── Extracción de texto plano para análisis (mammoth) ──────
 async function extractDocxText(file) {
   const arrayBuffer = await file.arrayBuffer();
@@ -2227,12 +2242,6 @@ async function extractDocxText(file) {
   state.fileBuffer = arrayBuffer.slice(0);
   state.fileHasTables = await docxHasTables(arrayBuffer.slice(0));
 
-  // Subida en paralelo: guardamos la promesa para esperarla antes de renderizar
-  state._uploadPromise = uploadToTempHost(file).then(url => {
-    state.filePublicUrl = url;
-    state._uploadPromise = null;
-  });
-
   // mammoth → texto plano para el motor de la Matriz TPA
   const resultado = await mammoth.extractRawText({ arrayBuffer: arrayBuffer.slice(0) });
   const texto     = resultado.value
@@ -2240,10 +2249,39 @@ async function extractDocxText(file) {
     .trim();
   const parrafos  = texto.split('\n').map(l => l.trim()).filter(Boolean);
 
+  // Mapa de estilos Word → HTML (español + inglés)
+  const styleMap = [
+    "p[style-name='Heading 1']    => h1:fresh",
+    "p[style-name='Heading 2']    => h2:fresh",
+    "p[style-name='Heading 3']    => h3:fresh",
+    "p[style-name='Heading 4']    => h4:fresh",
+    "p[style-name='Heading 5']    => h5:fresh",
+    "p[style-name='Heading 6']    => h6:fresh",
+    "p[style-name='Encabezado 1'] => h1:fresh",
+    "p[style-name='Encabezado 2'] => h2:fresh",
+    "p[style-name='Encabezado 3'] => h3:fresh",
+    "p[style-name='Título 1']     => h1:fresh",
+    "p[style-name='Título 2']     => h2:fresh",
+    "p[style-name='Título 3']     => h3:fresh",
+    "p[style-name='Título']       => h1:fresh",
+    "p[style-name='Title']        => h1:fresh",
+    "p[style-name='Subtitle']     => p.doc-subtitle:fresh",
+    "p[style-name='Subtítulo']    => p.doc-subtitle:fresh",
+    "p[style-name='Quote']        => blockquote:fresh",
+    "p[style-name='Cita']         => blockquote:fresh",
+    "p[style-name='List Paragraph'] => p.list-paragraph:fresh",
+    "p[style-name='Párrafo de lista'] => p.list-paragraph:fresh",
+    "p[style-name='Caption']      => p.doc-caption:fresh",
+    "p[style-name='Leyenda']      => p.doc-caption:fresh",
+    "r[style-name='Strong']       => strong",
+    "r[style-name='Emphasis']     => em",
+  ];
+
   try {
     const htmlResult = await mammoth.convertToHtml(
       { arrayBuffer: arrayBuffer.slice(0) },
       {
+        styleMap,
         includeDefaultStyleMap: true,
         convertImage: mammoth.images.imgElement(async image => ({
           src: `data:${image.contentType};base64,${await image.readAsBase64String()}`
@@ -2271,74 +2309,30 @@ async function docxHasTables(arrayBuffer) {
   }
 }
 
-// ── Renderizado con Microsoft Office Online Viewer ─────────
+// ── Renderizado visual con docx-preview ────────────────────
 async function renderizarDocx(container) {
-  if (!container) return;
-
-  // Esperar subida si aún está en curso (máx. 15 s)
-  if (state._uploadPromise) {
-    container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:.85rem">
-      ⏳ ${state.lang === 'es' ? 'Preparando visor de Office...' : 'Préparation du visualiseur Office...'}
-    </div>`;
-    const timeout = new Promise(r => setTimeout(r, 15000));
-    await Promise.race([state._uploadPromise, timeout]);
-  }
-
-  if (state.filePublicUrl) {
-    const encodedUrl = encodeURIComponent(state.filePublicUrl);
-    container.innerHTML = `
-      <div style="text-align:center;padding:.4rem .5rem;color:var(--text-muted);font-size:.78rem">
-        ${state.lang === 'es' ? '⏳ Cargando visor de Microsoft Office...' : '⏳ Chargement du visualiseur Microsoft Office...'}
-      </div>
-      <iframe
-        src="https://view.officeapps.live.com/op/embed.aspx?src=${encodedUrl}"
-        width="100%"
-        height="700px"
-        frameborder="0"
-        style="border:none;display:block;border-radius:4px">
-      </iframe>`;
-    injectDocxViewActions(container, 'office');
-    return;
-  }
-
-  // Sin URL pública: usar docx-preview local
-  await renderizarDocxLocal(container);
-}
-
-// ── Renderizado local con docx-preview (fallback) ──────────
-async function renderizarDocxLocal(container) {
   if (!container || !state.fileBuffer) return;
 
   container.innerHTML = `
     <div style="text-align:center;padding:3rem;color:var(--text-muted)">
       <div style="font-size:2rem;margin-bottom:.5rem">⏳</div>
-      <p style="font-size:.85rem">${state.lang === 'es' ? 'Renderizando documento localmente...' : 'Rendu local du document...'}</p>
+      <p style="font-size:.85rem">${state.lang === 'es' ? 'Renderizando documento...' : 'Rendu du document...'}</p>
     </div>`;
 
   try {
-    if (typeof window.docx === 'undefined') {
-      throw new Error('docx-preview no está disponible');
-    }
+    if (typeof window.docx === 'undefined') throw new Error('docx-preview no disponible');
 
     await window.docx.renderAsync(
       state.fileBuffer.slice(0),
       container,
       null,
       {
-        className:                     'docx-render',
-        inWrapper:                     true,
-        ignoreWidth:                   false,
-        ignoreHeight:                  false,
-        ignoreFonts:                   false,
-        renderHeaders:                 true,
-        renderFooters:                 true,
-        renderFootnotes:               true,
-        renderEndnotes:                true,
-        breakPages:                    true,
-        ignoreLastRenderedPageBreak:   true,
-        experimental:                  true,
-        trimXmlDeclaration:            true,
-        useBase64URL:                  true,
+        className: 'docx-render', inWrapper: true,
+        ignoreWidth: false, ignoreHeight: false, ignoreFonts: false,
+        renderHeaders: true, renderFooters: true,
+        renderFootnotes: true, renderEndnotes: true,
+        breakPages: true, ignoreLastRenderedPageBreak: true,
+        experimental: true, trimXmlDeclaration: true, useBase64URL: true,
       }
     );
 
@@ -2347,10 +2341,10 @@ async function renderizarDocxLocal(container) {
       renderizarDocxEstructurado(container, 'tables');
     } else {
       applyInlineFindings(container, state.analysisResults);
-      injectDocxViewActions(container, 'local');
+      injectDocxViewActions(container, 'preview');
     }
   } catch (err) {
-    console.warn('docx-preview falló, usando vista simplificada:', err);
+    console.warn('docx-preview falló:', err);
     renderizarDocxEstructurado(container, 'fallback');
   }
 }
@@ -2359,37 +2353,30 @@ function injectDocxViewActions(container, activeMode) {
   const existing = container.querySelector('.docx-view-actions');
   if (existing) existing.remove();
 
+  const es = state.lang === 'es';
   const actions = document.createElement('div');
   actions.className = 'docx-view-actions';
-
-  const btnOffice = state.filePublicUrl ? `
-    <button type="button" class="${activeMode === 'office' ? 'active' : ''}" onclick="renderizarDocx(document.getElementById('docx-preview-target'))">
-      ${state.lang === 'es' ? '📄 Vista Office' : '📄 Vue Office'}
-    </button>` : '';
-
-  const btnLocal = state.fileBuffer ? `
-    <button type="button" class="${activeMode === 'local' ? 'active' : ''}" onclick="renderizarDocxLocal(document.getElementById('docx-preview-target'))">
-      ${state.lang === 'es' ? '🖥 Vista local' : '🖥 Vue locale'}
-    </button>` : '';
-
-  const btnAnalysis = state.fileHtml || state.fileParrafos.length ? `
-    <button type="button" class="${activeMode === 'tables' ? 'active' : ''}" onclick="renderizarDocxEstructurado(document.getElementById('docx-preview-target'), 'manual')">
-      ${state.lang === 'es' ? '🔍 Vista con análisis' : '🔍 Vue avec analyse'}
-    </button>` : '';
-
-  actions.innerHTML = btnOffice + btnLocal + btnAnalysis;
-  if (actions.innerHTML.trim()) container.prepend(actions);
+  actions.innerHTML = `
+    <button type="button" class="${activeMode === 'preview' ? 'active' : ''}"
+      onclick="renderizarDocx(document.getElementById('docx-preview-target'))">
+      ${es ? '👁 Vista previa' : '👁 Aperçu'}
+    </button>
+    <button type="button" class="${activeMode === 'editor' ? 'active' : ''}"
+      onclick="renderizarDocxEstructurado(document.getElementById('docx-preview-target'), 'manual')">
+      ${es ? '✏️ Editor con sugerencias' : '✏️ Éditeur avec suggestions'}
+    </button>
+  `;
+  container.prepend(actions);
 }
 
 function renderizarDocxEstructurado(container, reason = 'manual') {
   if (!container) return;
+  const es = state.lang === 'es';
+
   const notice = reason === 'tables'
-    ? (state.lang === 'es'
-        ? 'Se detectaron tablas en el Word. Se activó una vista estructurada para conservar filas y celdas.'
-        : 'Des tableaux ont été détectés. Une vue structurée conserve les lignes et les cellules.')
-    : (state.lang === 'es'
-        ? 'Vista estructurada del documento: conserva tablas y contenido cuando la vista Word local no puede reproducirlo completo.'
-        : 'Vue structurée du document: conserve les tableaux et le contenu lorsque la vue Word locale ne peut pas tout reproduire.');
+    ? (es ? 'Tablas detectadas — vista de edición activa.' : 'Tableaux détectés — vue édition active.')
+    : (es ? 'Editor activo: haz clic en el texto resaltado para ver sugerencias. Puedes editar el texto directamente.'
+          : 'Éditeur actif: cliquez sur le texte surligné pour voir les suggestions. Vous pouvez éditer directement.');
 
   const html = state.fileHtml || state.fileParrafos
     .map(p => `<p>${escapeHtml(p)}</p>`)
@@ -2397,10 +2384,10 @@ function renderizarDocxEstructurado(container, reason = 'manual') {
 
   container.innerHTML = `
     <div class="docx-structured-notice">${notice}</div>
-    <div class="docx-structured-page">${html}</div>
+    <div class="docx-structured-page" contenteditable="true" spellcheck="false">${html}</div>
   `;
   applyInlineFindings(container.querySelector('.docx-structured-page'), state.analysisResults);
-  injectDocxViewActions(container, 'tables');
+  injectDocxViewActions(container, 'editor');
 }
 
 function applyInlineFindings(root, results) {

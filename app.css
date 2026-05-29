@@ -939,16 +939,39 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   box-shadow: 0 2px 12px rgba(0,0,0,.18);
   font-family: Calibri, Arial, sans-serif;
   font-size: 11pt;
-  line-height: 1.35;
+  line-height: 1.5;
   overflow-x: auto;
+  outline: none;
 }
-.docx-structured-page p {
-  margin: 0 0 8pt;
+.docx-structured-page:focus {
+  box-shadow: 0 2px 12px rgba(0,0,0,.18), 0 0 0 2px rgba(var(--primary-rgb, 59,130,246),.25);
+}
+.docx-structured-page p  { margin: 0 0 8pt; }
+.docx-structured-page h1 { font-size: 20pt; font-weight: 700; color: #1e3a5f; margin: 18pt 0 6pt; line-height: 1.2; }
+.docx-structured-page h2 { font-size: 16pt; font-weight: 700; color: #1e3a5f; margin: 14pt 0 5pt; line-height: 1.2; }
+.docx-structured-page h3 { font-size: 13pt; font-weight: 700; color: #1e3a5f; margin: 12pt 0 4pt; }
+.docx-structured-page h4 { font-size: 12pt; font-weight: 700; margin: 10pt 0 3pt; }
+.docx-structured-page h5 { font-size: 11pt; font-weight: 700; margin:  8pt 0 3pt; }
+.docx-structured-page h6 { font-size: 11pt; font-weight: 600; font-style: italic; margin: 8pt 0 3pt; }
+.docx-structured-page strong, .docx-structured-page b { font-weight: 700; }
+.docx-structured-page em, .docx-structured-page i   { font-style: italic; }
+.docx-structured-page u  { text-decoration: underline; }
+.docx-structured-page blockquote {
+  border-left: 3px solid #94a3b8;
+  margin: 8pt 0 8pt 18pt;
+  padding: 4pt 10pt;
+  color: #4b5563;
+  font-style: italic;
+}
+.docx-structured-page .doc-subtitle {
+  font-size: 13pt; color: #374151; font-style: italic; margin: 0 0 10pt;
+}
+.docx-structured-page .doc-caption {
+  font-size: 9pt; color: #6b7280; font-style: italic; margin: 2pt 0 8pt;
 }
 .docx-structured-page ul,
-.docx-structured-page ol {
-  margin: 0 0 8pt 24pt;
-}
+.docx-structured-page ol  { margin: 0 0 8pt 24pt; }
+.docx-structured-page li  { margin-bottom: 3pt; }
 .docx-structured-page table {
   border-collapse: collapse;
   table-layout: auto;
@@ -963,6 +986,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   vertical-align: top;
   min-width: 48px;
 }
+.docx-structured-page th { background: #f1f5f9; font-weight: 700; }
 .docx-structured-page img {
   display: inline-block;
   max-width: 100%;

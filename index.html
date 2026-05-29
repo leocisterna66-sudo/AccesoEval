@@ -528,8 +528,11 @@
     </span>
     <div class="export-bar-actions">
       <button class="btn btn-sm btn-outline" onclick="acceptAll()" id="txt-acceptAllBtn">✓ Aceptar todas</button>
+      <button class="btn btn-sm btn-outline" onclick="exportarDocumentoConCambios()" id="btn-export-doc" title="Exporta el documento editado con los cambios aceptados">
+        📝 <span id="txt-exportDocBtn">Exportar documento</span>
+      </button>
       <button class="btn btn-sm btn-primary" onclick="exportDoc()">
-        ⬇ <span id="txt-exportBtn">Exportar</span>
+        ⬇ <span id="txt-exportBtn">Exportar informe</span>
       </button>
     </div>
   </div>
@@ -598,7 +601,7 @@
 <div id="toast-container"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.23/dist/docx-preview.min.js"></script>
 <!-- OnlyOffice DocSpace SDK: se carga dinámicamente al conectar -->
 <script src="app.js?v=1.0.2"></script>
