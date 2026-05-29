@@ -2327,12 +2327,22 @@ async function renderizarDocx(container) {
       container,
       null,
       {
-        className: 'docx-render', inWrapper: true,
-        ignoreWidth: false, ignoreHeight: false, ignoreFonts: false,
-        renderHeaders: true, renderFooters: true,
-        renderFootnotes: true, renderEndnotes: true,
-        breakPages: true, ignoreLastRenderedPageBreak: true,
-        experimental: true, trimXmlDeclaration: true, useBase64URL: true,
+        className:                    'docx-render',
+        inWrapper:                    true,
+        ignoreWidth:                  true,   // ajusta al contenedor sin scroll horizontal
+        ignoreHeight:                 false,
+        ignoreFonts:                  false,
+        renderHeaders:                true,
+        renderFooters:                true,
+        renderFootnotes:              true,
+        renderEndnotes:               true,
+        breakPages:                   true,
+        ignoreLastRenderedPageBreak:  true,
+        experimental:                 true,
+        trimXmlDeclaration:           true,
+        useBase64URL:                 true,
+        renderChanges:                false,
+        renderComments:               false,
       }
     );
 
@@ -2491,7 +2501,7 @@ function markCandidatesInRoot(root, finding, candidates) {
     acceptNode(node) {
       const parent = node.parentElement;
       if (!parent || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-      if (parent.closest('.docx-view-actions, .docx-structured-notice, script, style, button, textarea, .inline-finding')) {
+      if (parent.closest('.docx-view-actions, .docx-structured-notice, script, style, button, textarea, .inline-finding, .docx-header, .docx-footer, .docx-footnotes, .docx-endnotes')) {
         return NodeFilter.FILTER_REJECT;
       }
       return NodeFilter.FILTER_ACCEPT;

@@ -861,6 +861,17 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   overscroll-behavior-x: contain;
   padding-bottom: 1rem;
 }
+/* docx-preview 0.3.x: envuelve cada página en .docx-wrapper > .docx-page */
+#docx-preview-target .docx-wrapper {
+  background: #e5e7eb !important;
+  padding: 1rem !important;
+}
+#docx-preview-target .docx-wrapper > section.docx {
+  box-shadow: 0 2px 10px rgba(0,0,0,.2) !important;
+  margin-bottom: 1rem !important;
+  width: 100% !important;
+  min-width: unset !important;
+}
 .analysis-source-banner {
   background: #F4FAF8;
   border: 1px solid #BFE4D7;
